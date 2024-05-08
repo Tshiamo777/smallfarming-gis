@@ -1107,7 +1107,7 @@ COMMENT ON COLUMN landuse_area_conditions.date iS 'The datetime alteration of th
 COMMENT ON COLUMN landuse_area_conditions.landuse_area_uuid is 'The foreign key linking to the landuse area table''s UUID.';
 COMMENT ON COLUMN landuse_area_conditions.landuse_area_condition_type_uuid is 'The foreign key linking to the landuse area condition type table''s UUID.';
 
-=======
+
 -- Gates: added by Jeremy Ferris
 CREATE TABLE IF NOT EXISTS gate_type (
         id SERIAL NOT NULL PRIMARY KEY,
@@ -1297,7 +1297,7 @@ COMMENT ON COLUMN gate_conditions.gate_uuid IS 'The foreign key which references
 -- Poles: By Charles Mudima
 --CREATE EXTENSION IF NOT EXISTS postgis;
 
-CREATE TABLE IF NOT EXISTS pole_material (
+CREATE TABLE IF NOT EXISTS pole_material(
     id serial NOT NULL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
     notes TEXT,
@@ -1311,26 +1311,26 @@ COMMENT ON TABLE pole_material IS 'Lookup table for the different pole materials
 COMMENT ON COLUMN pole_material.id IS 'The unique pole materials id, this is a primary key.';
 COMMENT ON COLUMN pole_material.name IS 'The name of the pole material.';
 COMMENT ON COLUMN pole_material.notes IS 'Any additional notes of the name of the pole material.';
-COMMENT ON COLUMN pole_material.picture IS 'Any visual representation of the material.';
+COMMENT ON COLUMN pole_material.image IS 'Any visual representation of the material.';
 COMMENT ON COLUMN pole_material.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
 COMMENT ON COLUMN pole_material.last_update_by IS 'The name of the user responsible for the latest update.';
 COMMENT ON COLUMN pole_material.uuid IS 'Global unique indetifier.';
 
 CREATE TABLE IF NOT EXISTS pole_function(
     id serial NOT NULL PRIMARY KEY,
-    FUNCTION TEXT NOT NULL,
+    name TEXT NOT NULL,
     notes TEXT,
     image TEXT,
     last_update TIMESTAMP DEFAULT now() NOT NULL,
     last_update_by TEXT NOT NULL,
-    uuid uuid DEFAULT gen_random_uuid()
+    uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid()
 );
 
 COMMENT ON TABLE pole_function IS 'Lookup table for the different pole function e.g telecommunincation pole.';
 COMMENT ON COLUMN pole_function.id IS 'The unique pole material id, this is a primary key.';
-COMMENT ON COLUMN pole_function.function IS 'The name of the function of a pole e.g street lighting pole or telecommunications pole.';
+COMMENT ON COLUMN pole_function.name IS 'The name of the function of a pole e.g street lighting pole or telecommunications pole.';
 COMMENT ON COLUMN pole_function.notes IS 'Any additional information on the pole functionality.';
-COMMENT ON COLUMN pole_function.picture IS 'Any visual representation of the pole function.';
+COMMENT ON COLUMN pole_function.image IS 'Any visual representation of the pole function.';
 COMMENT ON COLUMN pole_function.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
 COMMENT ON COLUMN pole_function.last_update_by IS 'The name of the user responsible for the latest update.';
 COMMENT ON COLUMN pole_function.uuid IS 'Global unqie identifier.';
@@ -1345,10 +1345,9 @@ height FLOAT NOT NULL,
     last_update TIMESTAMP DEFAULT now() NOT NULL,
     last_update_by TEXT NOT NULL,
     uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    pole_material_id INT NOT NULL,
-pole_function_id INT NOT NULL,
-    FOREIGN KEY (pole_material_id) REFERENCES pole_material(id),
-    FOREIGN KEY (pole_function_id) REFERENCES pole_function(id)
+	pole_material_uuid UUID REFERENCES pole_material(uuid),
+	pole_function_uuid UUID REFERENCES pole_function(uuid)
+   
     );
 
 COMMENT ON TABLE pole IS 'Pole table records any point entered as a pole e.g street pole.';
@@ -1357,12 +1356,12 @@ COMMENT ON COLUMN pole.installation_date IS 'The date and time when the pole was
 COMMENT ON COLUMN pole.height IS 'The height for the pole created.';
 COMMENT ON COLUMN pole.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
 COMMENT ON COLUMN pole.last_update_by IS 'The name of the user responsible for the latest update.';
-COMMENT ON COLUMN pole.pole_material_id IS 'Foreign key for pole material.';
-COMMENT ON COLUMN pole.pole_function_id IS 'Foreign key for pole function.';
+COMMENT ON COLUMN pole.pole_material_uuid IS 'Foreign key for pole material.';
+COMMENT ON COLUMN pole.pole_function_uuid IS 'Foreign key for pole function.';
 COMMENT ON COLUMN pole.uuid IS 'Global unique identifier.';
 
 CREATE TABLE IF NOT EXISTS pole_conditions(
-    pole_uuid UUID NOT NULL,
+    
     condition_uuid UUID NOT NULL,
     PRIMARY KEY (pole_uuid,
 condition_uuid,
@@ -1373,8 +1372,7 @@ notes TEXT NOT NULL,
     last_update TIMESTAMP DEFAULT now() NOT NULL,
     last_update_by TEXT NOT NULL,
     uuid uuid DEFAULT gen_random_uuid(),
-    FOREIGN KEY (pole_uuid) REFERENCES pole(uuid),
-    FOREIGN KEY (condition_uuid) REFERENCES CONDITION(uuid)
+    pole_uuid UUID REFERENCES pole(uuid)
 );
 
 COMMENT ON TABLE pole_conditions IS 'The table that records the state of a pole.';
@@ -1386,3 +1384,168 @@ COMMENT ON COLUMN pole_conditions.last_update IS 'The date that the last update 
 COMMENT ON COLUMN pole_conditions.last_update_by IS 'The name of the user responsible for the latest update.';
 COMMENT ON COLUMN pole_conditions.uuid IS 'Global unique identifier.';
 
+
+
+---------------------------------------- ROADS -------------------------------------
+--by TMB Segoati
+-- ROADS CLASS
+
+CREATE TABLE IF NOT EXISTS road_class
+(
+    id serial NOT NULL PRIMARY key,
+	uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+	last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+    name TEXT NOT NULL,
+    notes TEXT,
+    image TEXT,
+    sort_order INT UNIQUE
+);
+
+COMMENT ON TABLE road_class IS 'Road class refers to the road classification hierarchy, e.g. street, national-route, etc.';
+COMMENT ON COLUMN road_class.id IS 'The unique road class ID. Primary Key.';
+COMMENT ON COLUMN road_class.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN road_class.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN road_class.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN road_class.name IS 'The name of the road class.';
+COMMENT ON COLUMN road_class.notes IS 'Additional information about the road class.';
+COMMENT ON COLUMN road_class.image IS 'An image of the road class.';
+COMMENT ON COLUMN road_class.sort_order IS 'Defines the hierarchy of the road classes.';
+
+-- ROADS
+CREATE TABLE IF NOT EXISTS road
+(
+    id serial NOT NULL PRIMARY key,
+	uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+	last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+	name TEXT,
+    notes TEXT,
+    road_class_type_uuid UUID NOT NULL REFERENCES road_class(uuid)
+);
+
+COMMENT ON TABLE road IS 'Road refers to any physical road found in the area.';
+COMMENT ON COLUMN road.id IS 'The unique road ID. Primary Key.';
+COMMENT ON COLUMN road.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN road.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN road.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN road.name IS 'The name of the road.';
+COMMENT ON COLUMN road.notes IS 'Additional information about the road.';
+COMMENT ON COLUMN road.road_class_type_uuid IS 'Foreign key reference for road_class';
+--SEGMENTS
+CREATE TABLE IF NOT EXISTS segment
+(
+	id serial NOT NULL PRIMARY key,
+	uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+	last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+	name TEXT,
+    geometry geometry(LineString,3857) NOT NULL,
+	width_m FLOAT,
+	notes TEXT,
+	road_segment_uuid UUID NOT NULL REFERENCES road(uuid)
+);
+
+COMMENT ON TABLE segment IS 'Road refers to dynamic segments of each road entry.';
+COMMENT ON COLUMN segment.id IS 'The unique road segment ID. Primary Key.';
+COMMENT ON COLUMN segment.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN segment.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN segment.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN segment.name IS 'The name of the segment.';
+COMMENT ON COLUMN segment.geometry IS 'The linestring that represents the road. Follows EPSG: 3857.';
+COMMENT ON COLUMN segment.width_m IS 'The width of each segment in meters.';
+COMMENT ON COLUMN segment.notes IS 'Additional information about the segment.';
+COMMENT ON COLUMN segment.road_segment_uuid IS 'Foreign key reference for road.';
+
+-- ROAD SURFACE TYPE
+CREATE TABLE IF NOT EXISTS road_surface_type
+(
+    id serial NOT NULL PRIMARY key,
+	uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+    last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+	name TEXT UNIQUE NOT NULL,
+    notes TEXT,
+    image TEXT
+);
+
+COMMENT ON TABLE road_surface_type IS 'Look up table that refers to the surface of road, e.g. gravel, tar, etc.';
+COMMENT ON COLUMN road_surface_type.id IS 'The unique road surface type class ID. Primary Key.';
+COMMENT ON COLUMN road_surface_type.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN road_surface_type.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN road_surface_type.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN road_surface_type.name IS 'The name of the road surface type.';
+COMMENT ON COLUMN road_surface_type.notes IS 'Additional information about the road surface type.';
+COMMENT ON COLUMN road_surface_type.image IS 'An image of the road surface type.';
+
+-- ROAD CONDITIONS TYPE
+CREATE TABLE IF NOT EXISTS road_conditions_type
+(
+    id serial NOT NULL PRIMARY key,
+	uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+	last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    notes TEXT,
+    image TEXT
+);
+
+COMMENT ON TABLE road_conditions_type IS 'Look up table that refers to the conditions of road, e.g. Good, Bad, Work in progress.';
+COMMENT ON COLUMN road_conditions_type.id IS 'The unique road conditions type class ID. Primary Key.';
+COMMENT ON COLUMN road_conditions_type.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN road_conditions_type.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN road_conditions_type.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN road_conditions_type.name IS 'The name of the road condition type.';
+COMMENT ON COLUMN road_conditions_type.notes IS 'Additional information about the road condition type.';
+COMMENT ON COLUMN road_conditions_type.image IS 'An image of the road condition type.';
+
+--ASSOCIATION TABLES
+-- SEGMENT SURFACE
+CREATE TABLE IF NOT EXISTS segment_surfaces
+(
+    uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+    last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+	notes TEXT,
+	image TEXT,
+	date DATE NOT NULL,
+	segment_uuid UUID NOT NULL REFERENCES segment(uuid),
+    road_surface_type_uuid UUID NOT NULL REFERENCES road_surface_type(uuid),
+	--association
+    PRIMARY KEY (segment_uuid, road_surface_type_uuid, date),
+	--unique key
+	UNIQUE (segment_uuid, road_surface_type_uuid, date)
+);
+
+COMMENT ON TABLE segment_surfaces IS 'An association table that records the surface of a road segment.';
+COMMENT ON COLUMN segment_surfaces.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN segment_surfaces.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN segment_surfaces.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN segment_surfaces.notes IS 'Additional information on the surface of the road.';
+COMMENT ON COLUMN segment_surfaces.image IS 'Image of the road surface.';
+COMMENT ON COLUMN segment_surfaces."date" IS 'The date of the current surface when marked as changed';
+
+-- SEGMENT CONDITIONS
+CREATE TABLE IF NOT EXISTS segment_conditions
+(
+    uuid UUID UNIQUE NOT NULL DEFAULT uuid_generate_v4(),
+    last_update DATE DEFAULT now() NOT NULL,
+    last_update_by TEXT NOT NULL,
+	notes TEXT,
+    image TEXT,
+	date DATE NOT NULL,
+	segment_uuid UUID NOT NULL REFERENCES segment(uuid),
+    road_conditions_type_uuid UUID NOT NULL REFERENCES road_conditions_type(uuid),
+	--association
+    PRIMARY KEY (segment_uuid, road_conditions_type_uuid, date),
+	--unique key
+	UNIQUE (segment_uuid, road_conditions_type_uuid, date)
+);
+
+COMMENT ON TABLE segment_conditions IS 'An association table that records the condition of a road segment.';
+COMMENT ON COLUMN segment_conditions.uuid IS 'The unique user ID.';
+COMMENT ON COLUMN segment_conditions.last_update IS 'The date that the last update was made (yyyy-mm-dd hh:mm:ss).';
+COMMENT ON COLUMN segment_conditions.last_update_by IS 'The name of the user responsible for the latest update.';
+COMMENT ON COLUMN segment_conditions.notes IS 'Additional information on the conditions of the road.';
+COMMENT ON COLUMN segment_conditions.image IS 'Image of the condition of the road.';
+COMMENT ON COLUMN segment_conditions."date" IS 'The date of the current conditions when marked as changed';

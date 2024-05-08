@@ -65,7 +65,7 @@ INSERT INTO water_line_type (last_update_by, name, sort_order) VALUES ('Polly', 
 
 
 -- readings
-INSERT INTO readings(last_update_by, name) VALUES ('Mondli', 'Moisture Testers');
+--INSERT INTO readings(last_update_by, name) VALUES ('Mondli', 'Moisture Testers');
 
 -- fence
 -- fence type
@@ -112,4 +112,20 @@ INSERT INTO pole_function (id, last_update_by, "function") VALUES (4, 'Charles',
 -- Having an error on pole_uuid and condition_uuid
 --INSERT INTO pole_conditions (last_update_by, notes, "date", pole_uuid) VALUES ('Charles', 'Good', '10/11/2023', c52c5d28-d1aa-4780-b560-3dde03773374); 
 
+--roads
+--surface types
+INSERT INTO road_surface_type(last_update_by, name) values ('Tshiamo', 'Gravel');
+INSERT INTO road_surface_type(last_update_by, name) values ('Tshiamo', 'Tar');
+INSERT INTO road_surface_type(last_update_by, name) values ('Tshiamo', 'Paved');
+
+--road classes
+INSERT INTO road_class(last_update_by, name, sort_order) values ('Tshiamo', 'Street', 1);
+INSERT INTO road_class(last_update_by, name, sort_order) values ('Tshiamo', 'Main Road', 2);
+INSERT INTO road_class(last_update_by, name, sort_order) values ('Tshiamo', 'Regional Route', 3);
+INSERT INTO road_class(last_update_by, name, sort_order) values ('Tshiamo', 'National Route', 4);
+
+--road conditions types
+INSERT INTO road_conditions_type(last_update_by, name) values ('Tshiamo', 'Good');
+INSERT INTO road_conditions_type(last_update_by, name) values ('Tshiamo', 'Bad');
+INSERT INTO road_conditions_type(last_update_by, name) values ('Tshiamo', 'Work In Progress');
 
